@@ -1,0 +1,13 @@
+{
+  "name": "snake-game",
+  "version": "1.0.0",
+  "description": "Classic Snake Game",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "sh scripts/dev.sh"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

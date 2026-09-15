@@ -1,0 +1,22 @@
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #05080b;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#app {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+#app canvas {
+  display: block;
+}
