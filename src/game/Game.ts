@@ -6,6 +6,8 @@ import { Autobind } from '../utils/autobind.js';
 import { GameView } from '../view/GameView.js';
 import { GridLayout } from '../view/GridLayout.js';
 import { Direction } from './Direction.js';
+import type { ExitService } from '../app/ExitService.js';
+import type { MenuModel } from '../view/MenuView.js';
 import type { Rules } from './Rules.js';
 import { Snake } from './Snake.js';
 import { AnimationFrameTicker, type Ticker } from './Ticker.js';
@@ -16,13 +18,23 @@ export type GameDependencies = {
     readonly assets: GameAssets;
     readonly rules: Rules;
     readonly ticker?: Ticker;
+    readonly exit: ExitService;
 };
 
 export const enum GameStatus {
     Idle = 'Idle',
+    Menu = 'Menu',
     Running = 'Running',
-    Over = 'Over',
 }
+
+export const enum MenuChoice {
+    Yes = 0,
+    No = 1,
+}
+
+const MENU_OPTIONS: readonly string[] = ['Yes', 'No'];
+
+const HINT = 'ARROWS move    ESC / BACKSPACE end run';
 
 export const BOARD_PADDING: Point = { x: 16, y: 60 };
 
@@ -51,6 +63,8 @@ export class Game {
     private lastTimestampMs: number | null = null;
     private readonly turns: Direction[] = [];
     private unsubscribe: (() => void) | null = null;
+    private menuChoice: MenuChoice = MenuChoice.Yes;
+    private lastScore: number | null = null;
 
     public constructor(private readonly deps: GameDependencies) {
         this.view = new GameView(
@@ -64,12 +78,11 @@ export class Game {
     }
 
     public start(): void {
-        if (this.status === GameStatus.Running) return;
+        if (this.status !== GameStatus.Idle) return;
 
-        this.reset();
-        this.status = GameStatus.Running;
         this.unsubscribe ??= this.deps.input.onCommand(this.handleCommand);
         this.ticker.start(this.onFrame);
+        this.showMenu();
     }
 
     public stop(): void {
@@ -108,7 +121,7 @@ export class Game {
         const grows = this.food !== null && this.isSameCell(target, this.food);
 
         if (!this.deps.rules.board.contains(target) || this.snake.occupies(target, !grows)) {
-            this.status = GameStatus.Over;
+            this.endRun();
             return;
         }
 
@@ -118,7 +131,7 @@ export class Game {
         this.score += this.deps.rules.pointsPerFood;
         this.food = this.spawnFood();
         if (this.food === null) {
-            this.status = GameStatus.Over;
+            this.endRun();
         }
     }
 
@@ -130,19 +143,55 @@ export class Game {
     }
 
     private handleCommand(command: InputCommand): void {
-        if (command === InputCommand.Cancel) {
-            this.status = GameStatus.Over;
+        if (this.status === GameStatus.Menu) {
+            this.handleMenuCommand(command);
             return;
         }
 
-        if (command === InputCommand.Confirm) {
-            if (this.status === GameStatus.Over) this.start();
+        if (command === InputCommand.Cancel) {
+            this.endRun();
             return;
         }
+
 
         const direction = COMMAND_DIRECTIONS[command];
         if (direction === undefined || this.status !== GameStatus.Running) return;
         if (this.turns.length < MAX_BUFFERED_TURNS) this.turns.push(direction);
+    }
+
+    private handleMenuCommand(command: InputCommand): void {
+        if (command === InputCommand.MoveUp || command === InputCommand.MoveDown) {
+            this.menuChoice = this.menuChoice === MenuChoice.Yes ? MenuChoice.No : MenuChoice.Yes;
+            return;
+        }
+
+        if (command === InputCommand.Cancel) {
+            this.deps.exit.leave();
+            return;
+        }
+
+        if (command !== InputCommand.Confirm) return;
+
+        if (this.menuChoice === MenuChoice.Yes) {
+            this.startRun();
+            return;
+        }
+        this.deps.exit.leave();
+    }
+
+    private showMenu(): void {
+        this.status = GameStatus.Menu;
+        this.menuChoice = MenuChoice.Yes;
+    }
+
+    private startRun(): void {
+        this.reset();
+        this.status = GameStatus.Running;
+    }
+
+    private endRun(): void {
+        this.lastScore = this.score;
+        this.showMenu();
     }
 
     private reset(): void {
@@ -180,9 +229,18 @@ export class Game {
             snake: this.snake.segments,
             food: this.food,
             score: this.score,
-            hint: this.status === GameStatus.Over
-                ? 'GAME OVER — ENTER to play again'
-                : 'ARROWS move    ESC / BACKSPACE end run',
+            hint: HINT,
+            menu: this.status === GameStatus.Menu ? this.menuModel() : null,
         });
     }
+
+    private menuModel(): MenuModel {
+        return {
+            title: this.lastScore === null ? 'Want to play?' : 'Want to play again?',
+            subtitle: this.lastScore === null ? null : `Your score: ${this.lastScore}`,
+            options: MENU_OPTIONS,
+            selectedIndex: this.menuChoice,
+        };
+    }
+
 }

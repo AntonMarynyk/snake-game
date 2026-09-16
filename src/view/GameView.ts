@@ -4,17 +4,20 @@ import type { Point, Renderer } from '../rendering/Renderer.js';
 import { BoardView } from './BoardView.js';
 import type { GridLayout } from './GridLayout.js';
 import { HudView } from './HudView.js';
+import { MenuView, type MenuModel } from './MenuView.js';
 
 export type GameViewModel = {
     readonly snake: readonly Point[];
     readonly food: Point | null;
     readonly score: number;
     readonly hint: string;
+    readonly menu: MenuModel | null;
 };
 
 export class GameView {
     private readonly board: BoardView;
     private readonly hud: HudView;
+    private readonly menu: MenuView;
 
     public constructor(
         private readonly renderer: Renderer,
@@ -23,6 +26,7 @@ export class GameView {
     ) {
         this.board = new BoardView(renderer, layout);
         this.hud = new HudView(renderer);
+        this.menu = new MenuView(renderer);
     }
 
     public render(model: GameViewModel): void {
@@ -33,6 +37,10 @@ export class GameView {
         this.drawFood(model.food);
         this.drawSnake(model.snake);
         this.hud.draw({ score: model.score, hint: model.hint });
+
+        if (model.menu !== null) {
+            this.menu.draw(model.menu);
+        }
 
         this.renderer.endFrame();
     }

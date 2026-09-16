@@ -12,4 +12,8 @@ export const COLORS = {
   textPrimary: '#e8eef5',
   textMuted: '#7c8b9c',
   accent: '#7ef0a0',
+  panel: '#131b25',
+  overlayScrim: 'rgba(11, 15, 20, 0.78)',
 } as const;
+
+export const EXIT_URL = 'https://www.google.com/search?q=snake+game';

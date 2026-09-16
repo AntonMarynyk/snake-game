@@ -1,4 +1,5 @@
-import { ASSET_BASE_URL, VIEWPORT } from './config.js';
+import { ASSET_BASE_URL, EXIT_URL, VIEWPORT } from './config.js';
+import { NavigationExitService } from './app/ExitService.js';
 import { Stage } from './app/Stage.js';
 import { ImageBitmapAssetLoader } from './assets/ImageBitmapAssetLoader.js';
 import { ImageGameAssetsProvider } from './assets/ImageGameAssetsProvider.js';
@@ -29,6 +30,7 @@ async function bootstrap(): Promise<void> {
     input: stage.input,
     assets,
     rules: new ClassicRules(),
+    exit: new NavigationExitService(EXIT_URL),
   });
 
   game.start();
