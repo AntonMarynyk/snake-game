@@ -1,3 +1,5 @@
+import type { ImageAsset } from '../assets/ImageAsset.js';
+
 export type Size = {
   readonly width: number;
   readonly height: number;
@@ -37,6 +39,7 @@ export interface Renderer {
   clear(color: Color): void;
   drawRect(rect: Rect, style: RectStyle): void;
   drawText(text: string, position: Point, style: TextStyle): void;
+  drawImage(image: ImageAsset, target: Rect, source?: Rect): void;
   dispose(): void;
 }
 

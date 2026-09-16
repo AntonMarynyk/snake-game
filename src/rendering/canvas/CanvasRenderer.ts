@@ -1,3 +1,4 @@
+import type { ImageAsset } from '../../assets/ImageAsset.js';
 import type {
   Color,
   Point,
@@ -62,6 +63,18 @@ export class CanvasRenderer implements Renderer {
       this.context.strokeStyle = style.stroke;
       this.context.stroke();
     }
+  }
+
+  public drawImage(image: ImageAsset, target: Rect, source?: Rect): void {
+    if (source) {
+      this.context.drawImage(
+        image.bitmap,
+        source.x, source.y, source.width, source.height,
+        target.x, target.y, target.width, target.height,
+      );
+      return;
+    }
+    this.context.drawImage(image.bitmap, target.x, target.y, target.width, target.height);
   }
 
   public drawText(text: string, position: Point, style: TextStyle): void {
