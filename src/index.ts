@@ -1,6 +1,9 @@
 import { COLORS, VIEWPORT } from './config.js';
-import { CanvasRendererProvider } from './rendering/canvas/CanvasRendererProvider.js';
+import { Stage } from './app/Stage.js';
+import { InputFactory } from './input/InputFactory.js';
+import { KeyboardInputProvider } from './input/keyboard/KeyboardInputProvider.js';
 import { RendererFactory } from './rendering/RendererFactory.js';
+import { CanvasRendererProvider } from './rendering/canvas/CanvasRendererProvider.js';
 import { tryCatch } from './utils/tryCatch.js';
 
 function bootstrap(): void {
@@ -8,13 +11,16 @@ function bootstrap(): void {
   if (root === null) throw new Error('Missing mount point #app');
 
   const renderers = new RendererFactory([new CanvasRendererProvider(window.devicePixelRatio)]);
+  const inputs = new InputFactory([new KeyboardInputProvider()]);
 
-  const [renderer, error] = tryCatch(() => renderers.create(root, VIEWPORT))();
+  const [stage, error] = tryCatch(() => Stage.create(root, VIEWPORT, renderers, inputs))();
   if (error !== null) throw error;
 
-  renderer.beginFrame();
-  renderer.clear(COLORS.background);
-  renderer.endFrame();
+  stage.renderer.beginFrame();
+  stage.renderer.clear(COLORS.background);
+  stage.renderer.endFrame();
+
+  stage.input.onCommand((command) => console.log('[input]', command));
 }
 
 try {
