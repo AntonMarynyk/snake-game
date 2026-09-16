@@ -1,4 +1,4 @@
-import type { Size } from './rendering/CanvasSurface.js';
+import type { Size } from './rendering/Renderer.js';
 
 export const VIEWPORT: Size = { width: 1280, height: 720 };
 
