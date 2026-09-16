@@ -6,6 +6,7 @@ import { Autobind } from '../utils/autobind.js';
 import { GameView } from '../view/GameView.js';
 import { GridLayout } from '../view/GridLayout.js';
 import { Direction } from './Direction.js';
+import { AdOutcome, type AdResult, type AdService } from '../ads/AdService.js';
 import type { ExitService } from '../app/ExitService.js';
 import type { MenuModel } from '../view/MenuView.js';
 import type { Rules } from './Rules.js';
@@ -19,11 +20,13 @@ export type GameDependencies = {
     readonly rules: Rules;
     readonly ticker?: Ticker;
     readonly exit: ExitService;
+    readonly ads: AdService;
 };
 
 export const enum GameStatus {
     Idle = 'Idle',
     Menu = 'Menu',
+    Ad = 'Ad',
     Running = 'Running',
 }
 
@@ -35,6 +38,8 @@ export const enum MenuChoice {
 const MENU_OPTIONS: readonly string[] = ['Yes', 'No'];
 
 const HINT = 'ARROWS move    ESC / BACKSPACE end run';
+
+const AD_HINT = 'ADVERTISEMENT';
 
 export const BOARD_PADDING: Point = { x: 16, y: 60 };
 
@@ -82,6 +87,7 @@ export class Game {
 
         this.unsubscribe ??= this.deps.input.onCommand(this.handleCommand);
         this.ticker.start(this.onFrame);
+        void this.deps.ads.prepare().catch(noop);
         this.showMenu();
     }
 
@@ -173,7 +179,7 @@ export class Game {
         if (command !== InputCommand.Confirm) return;
 
         if (this.menuChoice === MenuChoice.Yes) {
-            this.startRun();
+            this.playAdBreak();
             return;
         }
         this.deps.exit.leave();
@@ -182,6 +188,19 @@ export class Game {
     private showMenu(): void {
         this.status = GameStatus.Menu;
         this.menuChoice = MenuChoice.Yes;
+    }
+
+    private playAdBreak(): void {
+        this.status = GameStatus.Ad;
+        void this.deps.ads.playPreRoll().then(this.onAdFinished, this.onAdFinished);
+    }
+
+    private onAdFinished(result: AdResult | unknown): void {
+        const outcome = (result as AdResult)?.outcome;
+        if (outcome === AdOutcome.Failed || outcome === undefined) {
+            console.warn('[ads] no ad was shown:', (result as AdResult)?.error ?? result);
+        }
+        this.startRun();
     }
 
     private startRun(): void {
@@ -229,7 +248,7 @@ export class Game {
             snake: this.snake.segments,
             food: this.food,
             score: this.score,
-            hint: HINT,
+            hint: this.status === GameStatus.Ad ? AD_HINT : HINT,
             menu: this.status === GameStatus.Menu ? this.menuModel() : null,
         });
     }
@@ -243,4 +262,8 @@ export class Game {
         };
     }
 
+}
+
+function noop(): void {
+    return;
 }

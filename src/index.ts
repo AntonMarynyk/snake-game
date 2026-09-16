@@ -1,4 +1,6 @@
-import { ASSET_BASE_URL, EXIT_URL, VIEWPORT } from './config.js';
+import { ADS, ASSET_BASE_URL, EXIT_URL, VIEWPORT } from './config.js';
+import { AdOverlay } from './ads/AdOverlay.js';
+import { ImaAdService } from './ads/ima/ImaAdService.js';
 import { NavigationExitService } from './app/ExitService.js';
 import { Stage } from './app/Stage.js';
 import { ImageBitmapAssetLoader } from './assets/ImageBitmapAssetLoader.js';
@@ -21,6 +23,13 @@ async function bootstrap(): Promise<void> {
   const [stage, stageError] = tryCatch(Stage.create)(root, VIEWPORT, renderers, inputs);
   if (stageError !== null) throw stageError;
 
+  const ads = new ImaAdService(new AdOverlay(root, VIEWPORT), {
+    sdkUrl: ADS.sdkUrl,
+    adTagUrl: ADS.adTagUrl,
+    size: VIEWPORT,
+    timeoutMs: ADS.timeoutMs,
+  });
+
   const gameAssets = new ImageGameAssetsProvider(new ImageBitmapAssetLoader(ASSET_BASE_URL));
   const [assets, assetError] = await tryCatch(gameAssets.load)();
   if (assetError !== null) throw assetError;
@@ -31,6 +40,7 @@ async function bootstrap(): Promise<void> {
     assets,
     rules: new ClassicRules(),
     exit: new NavigationExitService(EXIT_URL),
+    ads,
   });
 
   game.start();
