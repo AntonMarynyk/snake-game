@@ -15,6 +15,16 @@ export class GridLayout {
         });
     }
 
+    public static fit(board: Board, viewport: Size, padding: Point): GridLayout {
+        const cellSize = Math.floor(
+            Math.min(
+                (viewport.width - padding.x * 2) / board.columns,
+                (viewport.height - padding.y * 2) / board.rows,
+            ),
+        );
+        return GridLayout.centered(board, cellSize, viewport);
+    }
+
     public get width(): number {
         return this.board.columns * this.cellSize;
     }

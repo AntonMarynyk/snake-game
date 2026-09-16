@@ -1,14 +1,13 @@
-import { ASSET_BASE_URL, BOARD, VIEWPORT } from './config.js';
+import { ASSET_BASE_URL, VIEWPORT } from './config.js';
 import { Stage } from './app/Stage.js';
 import { ImageBitmapAssetLoader } from './assets/ImageBitmapAssetLoader.js';
 import { ImageGameAssetsProvider } from './assets/ImageGameAssetsProvider.js';
-import { Board } from './game/Board.js';
+import { Game } from './game/Game.js';
+import { ClassicRules } from './game/Rules.js';
 import { InputFactory } from './input/InputFactory.js';
 import { KeyboardInputProvider } from './input/keyboard/KeyboardInputProvider.js';
 import { RendererFactory } from './rendering/RendererFactory.js';
 import { CanvasRendererProvider } from './rendering/canvas/CanvasRendererProvider.js';
-import { GameView } from './view/GameView.js';
-import { GridLayout } from './view/GridLayout.js';
 import { tryCatch } from './utils/tryCatch.js';
 
 async function bootstrap(): Promise<void> {
@@ -25,19 +24,14 @@ async function bootstrap(): Promise<void> {
   const [assets, assetError] = await tryCatch(gameAssets.load)();
   if (assetError !== null) throw assetError;
 
-  const board = new Board(BOARD.columns, BOARD.rows);
-  const layout = GridLayout.centered(board, BOARD.cellSize, VIEWPORT);
-  const view = new GameView(stage.renderer, layout, assets);
-
-  const center = board.center();
-  view.render({
-    snake: [center, { x: center.x - 1, y: center.y }, { x: center.x - 2, y: center.y }],
-    food: { x: center.x + 5, y: center.y - 3 },
-    score: 0,
-    hint: 'ARROWS move    ENTER confirm    ESC / BACKSPACE cancel',
+  const game = new Game({
+    renderer: stage.renderer,
+    input: stage.input,
+    assets,
+    rules: new ClassicRules(),
   });
 
-  stage.input.onCommand((command) => console.log('[input]', command));
+  game.start();
 }
 
 bootstrap().catch((err) => window.alert(`Failed to bootstrap: ${err}`));
