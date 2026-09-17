@@ -5,7 +5,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "sh scripts/dev.sh"
+    "dev": "sh scripts/dev.sh",
+    "build": "tsc -p tsconfig.json"
   },
   "devDependencies": {
     "typescript": "^5.6.3"

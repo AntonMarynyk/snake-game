@@ -1,10 +1,16 @@
 # Snake
 
-Classic Snake Game with a Google IMA video pre-roll before every game.
+Classic Snake Game.
+**Live:** https://snake-canvas-ts.fly.dev/
 
 ## Run locally
 
 ```bash
 npm install
 npm run dev
+```
+
+## Build 
+```bash
+npm run build
 ```
